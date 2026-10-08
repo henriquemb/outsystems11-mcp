@@ -1,166 +1,128 @@
-# OutSystems 11 MCP
+# OutSystems 11 MCP & AI Engineering Guidelines
 
-**Maintain and evolve your OutSystems 11 estate with any coding agent — governed by the O11 lifecycle.**
+> **Fork do Repositório Oficial:** Este projeto é um *fork* customizado e aprimorado a partir do repositório oficial [OutSystems/outsystems11-mcp](https://github.com/OutSystems/outsystems11-mcp).  
+> Ele adiciona diretrizes estritas de governança, padrões de código limpo (Anti-Débito Técnico), regras mandatórias de documentação e uma especificação matemática universal de layout visual de fluxos para desenvolvimento assistido por agentes de IA no OutSystems 11 via Service Studio Model API.
 
-OutSystems 11 is the stable, trusted foundation your core operations run on. The OutSystems 11 MCP lets you modernize it with confidence: external coding agents read and evolve your O11 applications through a local MCP server embedded in Service Studio — so you get AI speed without the cost, disruption, or risk of a replatform.
+---
 
-## Why it matters
+## 📌 Visão Geral
 
-Years of logic, entities, and integrations shouldn't sit frozen in the platform. The OutSystems 11 MCP opens your application model to the AI tools your teams already use — turning a static estate back into a living, evolvable asset, in place.
+O **OutSystems 11 MCP** permite que agentes de IA (Google Antigravity, Claude Code, GitHub Copilot, Cursor, etc.) inspecionem, refatorem e gerem lógica e estruturas diretamente nos módulos `.oml` abertos no **Service Studio** através de um servidor MCP local embutido (`http://127.0.0.1:41820/mcp`).
 
-- **Evolve in place** — no migration, no replatform. Work on the estate you already run.
-- **Governed by the O11 lifecycle** — every change flows through the review and quality gates you already trust.
-- **Yours, and only yours** — runs locally in your environment, including on-premises and air-gapped deployments. Nothing leaves your environment.
-- **Open and neutral** — works with any MCP-compatible coding agent. Optimized today for Claude Code, with GitHub Copilot (CLI and VS Code), Google Antigravity, Kiro, Cursor and Codex CLI also supported.
+Todas as alterações em tempo de design são regidas pela **Model API** do OutSystems e passam pelo ciclo de revisão e validação antes da aceitação final (Compare-and-Merge).
 
-## What it is
+---
 
-| Aspect | Details |
-| --- | --- |
-| **Tool** | A local MCP server, embedded in Service Studio (11.55.91 and later) — the entry point for your agent. |
-| **Data** | Your O11 application model, read and written via the OutSystems Model API. |
-| **Reach** | Any MCP-compatible agent; optimized today for Claude Code, and packaged for GitHub Copilot (CLI and VS Code), Google Antigravity, Kiro, Cursor and Codex CLI. |
-| **Capabilities** | Read and analyze — **Generally Available**. Model writes — **Beta**. |
-| **Guardrails** | Every change runs through the O11 lifecycle — nothing leaves your environment. |
+## 🚀 Como Iniciar o Servidor MCP no Service Studio
 
-## Capability status
+1. Abra o módulo desejado no **Service Studio** (versão 11.55.91 ou superior).
+2. No menu superior, vá em **Edit > MCP Configuration...**.
+3. Confirme a porta padrão (`41820`) e clique em **Start MCP Server**.
+4. No primeiro comando emitido pelo agente, aprove a solicitação de autorização no Service Studio para gerar o handshake de confiança.
 
-| Capability | Status | What it covers |
-| --- | --- | --- |
-| **Read** | **Generally Available (GA)** | Every read tool — `getDataModel`, `getScreen`, `getServerAction`, `runQuery`, `getValidationMessages`, `listApps`, … |
-| **Write** | **Beta** | Mutating `applyModelApiCode` lambdas (new or changed entities, screens, actions, …), plus `omlMerge`, `omlReset`, `omlRefreshReferences` and `omlPublish`. |
+---
 
-The write capabilities above are Beta Features. OutSystems provides Beta Features to collect customer feedback on non-final capabilities. A Beta Feature can change significantly, including through breaking changes, or OutSystems can discontinue it. For the terms that apply, refer to the [OutSystems Beta Features Agreement](https://www.outsystems.com/legal/beta-features-agreement).
+## 🏛️ Regras e Padrões Mandatórios de Desenvolvimento
 
-Beta write capabilities are fully usable, but their behavior may still change between Service Studio releases. By default, every write is staged and reviewed through Service Studio's interactive Compare-and-Merge window before anything is accepted into your module.
+Todos os agentes de IA e desenvolvedores que operam neste repositório devem seguir obrigatoriamente as diretrizes abaixo:
 
-## What you can do
+### 1. Nomenclatura Obrigatória
+* **Ações de Timers:** Ações executadas por Timers devem **obrigatoriamente possuir o prefixo `"Timer_"`** no nome (ex: `Timer_ProcessarPropostas`, `Timer_SincronizarContatos`).
+* **Service Actions:** Todas as Service Actions devem **obrigatoriamente possuir o sufixo `"Service"`** no nome (ex: `ValidarDocumentoService`, `ObterBeneficiarioService`).
 
-**Understand your estate (GA)** — with zero risk. Just ask your agent:
+---
 
-- **Understand an application** — "Walk me through what this module does and how it's structured."
-- **Map dependencies** — "What does this module depend on, and what breaks if I change this action?"
-- **Generate documentation** — onboarding guides and process flows for the module open in Service Studio.
-- **Surface risk** — flag security, performance, and compliance concerns.
-- **Baseline quality** — find dead code and gaps in test coverage.
+### 2. Documentação e Parâmetros Padronizados
+* **Descrição Obrigatória:**
+  * Todas as Actions (Server, Client e Service Actions) devem possuir **descrição preenchida** detalhando seu propósito.
+  * Todas as Estruturas (Structures) e seus atributos devem possuir **descrição preenchida**.
+  * Parâmetros de entrada (`Input Parameters`) e saída (`Output Parameters`) devem possuir **descrição preenchida**.
+* **Parâmetros de Saída Obrigatórios em Actions:**
+  * Toda Action deve possuir obrigatoriamente dois parâmetros de saída:
+    * Em português: **`IsSucesso`** (`Boolean`) e **`Mensagem`** (`Text`);
+    * Em inglês: **`IsSuccess`** (`Boolean`) e **`Message`** (`Text`).
+  * `IsSucesso` marca `True` se a ação foi executada com sucesso ou `False` em caso de erro. `Mensagem` armazena a mensagem de erro (ou informativa).
+* **Proibição de Valores Padrão (`Default Value`):**
+  * É **estritamente proibido configurar valores padrão em parâmetros de entrada e de saída**. Todas as saídas devem ser atribuídas explicitamente no fluxo lógico através de nós de atribuição (`Assign`).
+  * **Exceção única permitida:** Apenas variáveis locais (`Local Variables`) utilizadas para manipulação interna (contadores, buffers, replaces, regex) podem possuir valor default.
+* **Labels Obrigatórios em Nós de Atribuição (`AssignNode`):**
+  * **Todo nó `Assign` deve obrigatoriamente possuir `Label` preenchido**, sendo este **curto e autoexplicativo** sobre o propósito das atribuições (ex: `"Set Sucesso"`, `"Set Erro"`, `"Init Variaveis"`, `"Update DataAnterior"`, `"Trunca BodyFinal"`). É proibido manter nós Assign sem label (vazio ou nulo).
 
-**Evolve your estate (Beta)** — bounded Model API writes, such as new entities, screens and actions, reviewed through Service Studio's Compare-and-Merge window before anything is accepted.
+---
 
-## What's in this repository
+### 3. Padrão Universal de Layout Visual de Fluxos (Model API)
 
-This repo distributes the OutSystems 11 MCP skill — it teaches your agent how to read and evolve the OutSystems 11 module open in Service Studio.
+Esta especificação geométrica aplica-se a **todo e qualquer fluxo**, independentemente do tamanho (sejam 3 nós ou 50+ nós):
 
-| Layer | Cross-tool standard? | In this repo |
-| --- | --- | --- |
-| **Skill / knowledge base** | ◑ `SKILL.md` format — shared by Claude Code, Antigravity, Kiro, Codex and Cursor | [`servicestudio-mcp-oml/`](servicestudio-mcp-oml/) — start with `SKILL.md` |
-| **Agent instructions** | ✅ `AGENTS.md` — cross-tool standard, read by Copilot, Antigravity, Kiro, Cursor, Codex… and Claude Code | `AGENTS.md`, plus `.github/copilot-instructions.md` for Copilot |
-| **MCP client config** | ✗ no standard — every client's file location and schema differ | committed where the client reads from the repo; samples in [`mcp/`](mcp/) where it reads from your home directory |
+#### A. Origem e Eixo Base
+* **Posição Inicial Fixa do Nó `Start`:** O nó `Start` deve estar sempre posicionado em **`HorizontalPosition = 3200`** (Tronco principal) e **`VerticalPosition = 800`**. Todos os fluxos iniciam rigorosamente a partir dessa coordenada.
 
-```
-outsystems11-mcp/
-├─ servicestudio-mcp-oml/        # the skill: SKILL.md + reference/ + examples/ + docs/
-├─ AGENTS.md                     # cross-tool agent instructions (the contract, condensed)
-├─ CLAUDE.md                     # Claude Code's native instructions file
-├─ ARCHITECTURE.md               # system boundary + the tenets governing skill content
-├─ CONTRIBUTING.md               # how to change this repo
-├─ MCP-DESIGN-CHOICES.md         # MCP host design choices & caveats worth knowing before you use the Service Studio MCP
-├─ .github/
-│  ├─ copilot-instructions.md    # Copilot always-on instructions
-│  ├─ chatmodes/                 # VS Code Copilot chat mode
-│  └─ prompts/                   # VS Code Copilot /oml-edit prompt
-├─ .mcp.json                     # committed MCP config (Claude Code, in-repo)
-├─ .claude/settings.json         # pre-approves the servicestudio MCP server
-├─ .vscode/mcp.json              # committed MCP config (Copilot in VS Code)
-├─ .kiro/settings/mcp.json       # committed MCP config (Kiro, in-repo)
-├─ .cursor/mcp.json              # committed MCP config (Cursor, in-repo)
-├─ mcp/                          # MCP config samples for home-directory clients
-│  ├─ antigravity.mcp_config.json
-│  ├─ copilot-cli.mcp-config.json
-│  └─ codex.config.toml
-├─ scripts/                      # install.sh / install.ps1 — installs the skill for Claude Code
-└─ setup-docs/                   # per-tool setup guides
-```
+#### B. Espaçamento Vertical Consecutivo ($\Delta Y$)
+* **1 linha de título/label:** separação exata de **`1600`** (via `ConnectedBelow(ref, 1600)` ou `Below(ref, 1600)`).
+* **2 linhas de título/label:** separação exata de **`1829`** (4 unidades de grid de 457, via `ConnectedBelow(ref, 1829)` ou `Below(ref, 1829)`).
 
-## Getting started (Claude Code scenario)
+#### C. Espaçamento Horizontal e Fórmula de Colunas ($X$)
+Qualquer desvio ou coluna horizontal segue a fórmula matemática:
+$$\mathbf{X_{coluna} = 3200 + (coluna \times 1829)}$$
 
-### 1. Install Service Studio
+* **Coluna 0 (Tronco Principal):** `X0 = 3200`
+* **Coluna 1 (1º Desvio à Direita):** `X1 = 5029` (`3200 + 1829`)
+* **Coluna 2 (2º Desvio à Direita):** `X2 = 6857` (`5029 + 1828`)
+* **Coluna 3 (3º Desvio à Direita):** `X3 = 8686` (`6857 + 1829`)
+* **Coluna $n$ ($n$-ésimo Desvio):** `Xn = 3200 + n * 1829`
 
-The MCP server your agent connects to is **embedded in Service Studio** — the skill on its own has nothing to talk to without it. Install or update to **Service Studio 11.55.91 or later**; the MCP server ships in the standard release, with no separate build or activation required.
+> Todos os nós em uma mesma coluna devem compartilhar rigorosamente a mesma coordenada `HorizontalPosition`.
 
-### 2. Start the MCP server in Service Studio
+#### D. Paralelismo e Branches Horizontais ($Y$)
+* Em ramificações horizontais, todos os nós do mesmo segmento mantêm a mesma coordenada `VerticalPosition` ($Y$ constante).
+* Em branches descendentes de decisões, alinhar na mesma coordenada $Y$ do nó correspondente no tronco para manter o paralelismo visual.
 
-The MCP server is embedded in Service Studio, but it does **not** start automatically — you start it per session, from the module you want to work on:
+#### E. Loops (`For Each`)
+* O ciclo iterativo (`CycleTarget`) **deve sempre iniciar alinhado à direita** do nó `For Each` (nunca para cima, para baixo ou para a esquerda).
 
-1. Open the module in Service Studio.
-2. Go to **Edit > MCP Configuration...**.
-3. Confirm the **MCP server port** (default `41820`) and click **Start MCP Server**.
+#### F. Padrão Universal para Nós de Decisão Múltipla (`SwitchNode`)
+* **Tronco do Switch:** Fica posicionado no tronco principal (`X = 3200`).
+* **Coluna das Condições:** Deslocada **2 passos de grid à direita** em **`X = 6857`** (Coluna 2, via `ToTheRightOf(switchNode, 3657)`), garantindo espaço visual limpo para ler os labels das condições nas setas sem sobreposição.
+* **Alinhamento em Cascata das Condições:**
+  * 1ª condição sai alinhada horizontalmente com o Switch ($Y = Y_{switch}$).
+  * Condições seguintes (2ª até $n$-ésima) descem na mesma coluna `X = 6857` com passo vertical consecutivo de **`1600`** ($Y_i = Y_{switch} + (i - 1) \times 1600$).
+* **Ramo `Otherwise`:** Segue sempre para baixo no tronco (`X = 3200`). Em switches encadeados, o próximo Switch posiciona-se no tronco **`1600`** abaixo do último nó da coluna de condições do switch anterior.
 
-The dialog then shows the **MCP server URL** and the exact **Claude Code command** to register it, each with its own **Copy** button — you can copy the command straight from here instead of retyping it in step 3 below.
+#### G. Comentários (`CommentNode`)
+* **Posicionamento Lateral (Padrão):** Coluna à esquerda em **`X = 914`** com deslocamento de **`1371`** para cima em relação ao nó conectado ($Y_{nó} - 1371$).
+* **Fallback Vertical:** Diretamente acima do nó na mesma coluna com deslocamento de **`1371`** para cima ($Y_{nó} - 1371$).
 
-### 3. Register the MCP server
+---
 
-Before you open Claude Code and add the skill, register the Service Studio MCP server so your agent knows where to reach it. In a terminal, run the command you copied in step 2 (or type it out):
+### 4. Diretrizes Anti-Débito Técnico (AI Mentor Studio / Code Quality)
+1. **Arquitetura Canvas:** Hierarquia respeitada (`Orchestration -> End-User -> Core -> Foundation`). Módulos Foundation agnósticos de negócio. Entidades públicas sempre com `Expose Read-Only = Yes`. Zero referências cíclicas.
+2. **Performance:** Proibido executar Aggregates ou consultas SQL dentro de loops (`For Each`). Limites explícitos de registros (`Max Records` / `TOP`). Verificação de listas vazias exclusivamente via `.List.Empty` (nunca `.Count = 0`). Proibido alterar Site Properties em tempo de execução via lógica.
+3. **Segurança:** Parâmetros SQL sem `Expand Inline` desnecessário (quando exigido, usar `BuildSafe_InClauseIntegerList()` ou `EncodeSql()`). Proibido passar `GetUserId()` do cliente para o servidor. Site Properties com segredos/senhas configuradas como `Is Secret = Yes`.
+4. **Manutenibilidade:** Código limpo, sem lógica inalcançável (dead code) ou elementos obsoletos (deprecated). Sinalização explícita de `[commit transaction]` em ações transacionais públicas.
 
-```
-claude mcp add --transport http servicestudio http://127.0.0.1:41820/mcp
-```
+---
 
-This registers an HTTP MCP server named `servicestudio` pointing at the local endpoint exposed by Service Studio. Service Studio must be running with a module open **and its MCP server started** (step 2) for the connection to succeed.
-
-> This is what you want for everyday use: the skill installs globally, so you'll be running Claude Code from your own projects. If you are working **inside this repository** instead, you can skip the command — the committed `.mcp.json` already declares the same server and `.claude/settings.json` pre-approves it.
-
-### 4. Add the skill to Claude Code
-
-Clone this repository and run the installer for your platform. It copies `servicestudio-mcp-oml/` into your Claude Code skills directory (`%USERPROFILE%\.claude\skills\` on Windows, or` ~/.claude/skills/` on macOS/Linux), overwriting any existing copy. Re-run the same command any time to update to the latest version.
+## 📂 Estrutura do Repositório
 
 ```
-git clone https://github.com/OutSystems/outsystems11-mcp.git
-cd outsystems11-mcp
+├── .agents/
+│   ├── mcp_config.json               # Configuração do MCP Server local
+│   ├── rules/
+│   │   ├── outsystems-code-quality.md   # Diretrizes Anti-Débito Técnico (AI Mentor Studio)
+│   │   └── outsystems-code-standards.md # Padrões de documentação e layout visual
+│   └── skills/
+│       └── servicestudio-mcp-oml/       # Skill Model API (SKILL.md, referências e exemplos)
+├── AGENTS.md                         # Contrato principal e regras executáveis dos agentes
+├── ARCHITECTURE.md                   # Tenets e arquitetura da Skill Model API
+├── CONTRIBUTING.md                   # Diretrizes para contribuição com o projeto
+├── LICENSE                           # Termos de licença do repositório
+├── MCP-DESIGN-CHOICES.md             # Decisões de design e comportamento do MCP Server
+└── README.md                         # Documentação central do projeto
 ```
 
-**macOS / Linux / Git Bash on Windows**
+---
 
-```
-bash scripts/install.sh
-```
+## 📄 Licença e Termos
 
-**Windows PowerShell**
-
-```
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1
-```
-
-Start a new Claude Code session afterward so the skill loads.
-
-> Using a different agent? See [Using other coding agents](#using-other-coding-agents) — steps 1, 2 and 5 still apply, only the skill install and MCP registration differ.
-
-### 5. Authorize Service Studio
-
-Open the module you want to work on. The first time your agent issues a command, Service Studio shows an access prompt — approve it to establish the trust handshake between your agent and Service Studio.
-
-If the connection between Claude and Service Studio isn't working, try running `/mcp reconnect servicestudio` in your Claude Code session.
-
-### 6. Verify
-
-Start a new Claude Code session, with a Reactive module open in Service Studio, and ask:
-
-> Summarize the module open in Service Studio.
-
-If you get a summary back, you're ready.
-
-> **Good to know:** your coding agent reaches its model over the network. Everything else — the MCP server and your application model — runs locally in your environment.
-
-## Using other coding agents
-
-Claude Code is the optimized path, and the steps above describe it. The same skill and the same MCP server work with other MCP-compatible agents — each just reads its instructions and its MCP config from a different place:
-
-| Tool | Instructions | MCP config | Setup guide |
-| --- | --- | --- | --- |
-| **Copilot CLI** (`copilot`) | `AGENTS.md` (auto, from the repo root) | `~/.copilot/mcp-config.json` — sample in [`mcp/`](mcp/) | [setup-docs/copilot-cli.md](setup-docs/copilot-cli.md) |
-| **Copilot in VS Code** | `.github/copilot-instructions.md` + chat mode | `.vscode/mcp.json` (committed — nothing to install) | [setup-docs/copilot-vscode.md](setup-docs/copilot-vscode.md) |
-| **Antigravity** (`agy`) | skill in `~/.gemini/skills/` or `AGENTS.md` | `~/.gemini/config/mcp_config.json` — sample in [`mcp/`](mcp/) | [setup-docs/antigravity.md](setup-docs/antigravity.md) |
-| **Kiro** (`kiro-cli`) | skill in `~/.kiro/skills/` or `AGENTS.md` | `.kiro/settings/mcp.json` (committed — nothing to install) | [setup-docs/kiro.md](setup-docs/kiro.md) |
-| **Codex CLI** | skill in `.agents/skills/` or `~/.codex/skills/`, or `AGENTS.md` | `~/.codex/config.toml` — sample in [`mcp/`](mcp/) | [setup-docs/codex.md](setup-docs/codex.md) |
-| **Cursor** | skill in `.cursor/skills/` or `.agents/skills/`, or `AGENTS.md` | `.cursor/mcp.json` (committed — nothing to install) | [setup-docs/cursor.md](setup-docs/cursor.md) |
-
-Steps 1, 2 and 5 of Getting started apply to every tool — you still need Service Studio 11.55.91 or later, its MCP server started, and the first-connection approval in Service Studio. Only the skill install and the MCP registration differ. Note that `scripts/install.sh` / `install.ps1` install for **Claude Code only**, so the other tools are a manual copy; each guide above has the exact commands.
+* As ferramentas de escrita e mutação no OML via Model API são um recurso beta da OutSystems. Consulte o [OutSystems Beta Features Agreement](https://www.outsystems.com/legal/beta-features-agreement).
+* Projeto baseado em [OutSystems/outsystems11-mcp](https://github.com/OutSystems/outsystems11-mcp).

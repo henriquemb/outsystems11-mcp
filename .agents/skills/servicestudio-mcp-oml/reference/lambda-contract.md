@@ -75,7 +75,7 @@ eSpace lives in the sidecar process and the lambda mutates it in place.
 The host (in Service Studio) and the sidecar talk
 over **stdio JSON-RPC**: one child process per call, request in, single
 response line out (see [`mcp-session-pointer.md`](mcp-session-pointer.md) and
-the architecture notes in `SKILL.md`).
+the architecture notes in [`../SKILL.md`](../SKILL.md)).
 
 ### The `Action<IESpace>` target
 
